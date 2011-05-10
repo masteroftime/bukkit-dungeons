@@ -80,9 +80,18 @@ public class Dungeon
 				{
 					editing = true;
 					player = p;
+					p.sendMessage("You started editing a Dungeon!");
+					p.sendMessage("/dungeon addmob <mobtype> To add a mob at your location");
+					p.sendMessage("/dungeon addreward <item-id> <number> To add a reward for players who finish the dungeon");
+					p.sendMessage("/dungeon setstart To set the start point of the dungeon");
+					p.sendMessage("/dungeon setend To set the end point of the dungeon");
+					p.sendMessage("/dungeon msg start/end <msg> To set messages wich are sent to the players at start and end of the dungeon.");
+					p.sendMessage("/dungeon save To finish editing the dungeon");
 				}
+				else p.sendMessage("The dungeon is currently in use.");
 			}
 		}
+		else p.sendMessage("You don't have the permissions to edit this dungeon.");
 	}
 	
 	public void endEdit(Player p)
@@ -149,8 +158,8 @@ public class Dungeon
 	
 	public void startDungeon(Player p)
 	{
-		//synchronized (this)
-		//{
+		synchronized (this)
+		{
 			if(!started && !editing)
 			{
 				started = true;
@@ -161,7 +170,7 @@ public class Dungeon
 				if(startMsg != null) p.sendMessage(startMsg);
 			}
 			else p.sendMessage("The dungeon is not free at the moment. Try again later.");
-		//}
+		}
 	}
 	
 	public void leaveDungeon()

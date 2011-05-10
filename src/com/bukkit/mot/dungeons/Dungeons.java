@@ -81,12 +81,17 @@ public class Dungeons extends JavaPlugin
 								p.sendMessage("/dungeon msg start/end <msg> To set messages wich are sent to the players at start and end of the dungeon.");
 								p.sendMessage("/dungeon save To finish editing the dungeon");
 							}
-							else p.sendMessage("This dungeon already exitst");
+							else p.sendMessage("A dungeon with this name already exists.");
 						}
+						else sender.sendMessage("You don't have the permissions to use this command.");
 					}
 					else sender.sendMessage("You can't use this command from command line");
 				}
-				else sender.sendMessage("Invalid number of arguments");
+				else 
+				{
+					sender.sendMessage("Invalid number of arguments");
+					sender.sendMessage("Usage: /dungeon create <name>");
+				}
 			}
 			else if(args[0].equals("edit"))
 			{
@@ -101,33 +106,40 @@ public class Dungeons extends JavaPlugin
 							if(d != null)
 							{
 								d.startEdit(p);
-								p.sendMessage("You started editing a Dungeon!");
-								p.sendMessage("/dungeon addmob <mobtype> To add a mob at your location");
-								p.sendMessage("/dungeon addreward <item-id> <number> To add a reward for players who finish the dungeon");
-								p.sendMessage("/dungeon setstart To set the start point of the dungeon");
-								p.sendMessage("/dungeon setend To set the end point of the dungeon");
-								p.sendMessage("/dungeon msg start/end <msg> To set messages wich are sent to the players at start and end of the dungeon.");
-								p.sendMessage("/dungeon save To finish editing the dungeon");
 							}
 							else p.sendMessage("This dungeon already exitst");
 						}
+						else sender.sendMessage("You don't have the permissions to use this command.");
 					}
 					else sender.sendMessage("You can't use this command from command line");
 				}
-				else sender.sendMessage("Invalid number of arguments");
+				else 
+				{
+					sender.sendMessage("Invalid number of arguments");
+					sender.sendMessage("Usage: /dungeon edit <name>");
+				}
 			}
 			else if(args[0].equals("delete"))
 			{
 				if(args.length == 2)
 				{
-					Dungeon d = getDungeon(args[1]);
-					if(d != null)
+					if(sender.isOp())
 					{
-						dungeons.remove(d);
-						loader.deleteDungeon(d);
-						sender.sendMessage("Dungeon deleted.");
+						Dungeon d = getDungeon(args[1]);
+						if(d != null)
+						{
+							dungeons.remove(d);
+							loader.deleteDungeon(d);
+							sender.sendMessage("Dungeon deleted.");
+						}
+						else sender.sendMessage("Dungeon " + args[1] + " doesn't exist.");
 					}
-					else sender.sendMessage("Could not find dungeon");
+					else sender.sendMessage("You don't have the permissions to use this command.");
+				}
+				else 
+				{
+					sender.sendMessage("Invalid number of arguments");
+					sender.sendMessage("Usage: /dungeon delete <name>");
 				}
 			}
 			else if(args[0].equals("list"))
@@ -154,7 +166,11 @@ public class Dungeons extends JavaPlugin
 					}
 					else sender.sendMessage("You can't use this command from command line");
 				}
-				else sender.sendMessage("Invalid number of arguments");
+				else 
+				{
+					sender.sendMessage("Invalid number of arguments");
+					sender.sendMessage("Use: /dungeon start <name>");
+				}
 			}
 			else if(args[0].equals("leave"))
 			{
@@ -165,7 +181,7 @@ public class Dungeons extends JavaPlugin
 					{
 						d.leaveDungeon();
 					}
-					else sender.sendMessage("Youre not in any dungeon at the moment");
+					else sender.sendMessage("Youre not in a dungeon.");
 				}
 				else sender.sendMessage("You can't use this command from command line");
 			}
@@ -215,11 +231,15 @@ public class Dungeons extends JavaPlugin
 					}
 					else sender.sendMessage("You can't use this command from command line");
 				}
-				else sender.sendMessage("Invalid number of arguments");
+				else 
+				{
+					sender.sendMessage("Invalid number of arguments");
+					sender.sendMessage("Use: /dungeon addmob <type>");
+				}
 			}
 			else if(args[0].equals("addreward"))
 			{
-				if(args.length == 3)
+				if(args.length == 3 || args.length == 2)
 				{
 					if(sender instanceof Player)
 					{
@@ -227,17 +247,21 @@ public class Dungeons extends JavaPlugin
 						Dungeon d = getEditedDungeon(p);
 						if(d != null)
 						{
-							d.addReward(args[1], args[2], p);
+							d.addReward(args[1], args.length == 2?args[2]:"1", p);
 						}
 						else sender.sendMessage("You have to be in editmode to use this command");
 					}
 					else sender.sendMessage("You can't use this command from command line");
 				}
-				else sender.sendMessage("Invalid number of arguments");
+				else 
+				{
+					sender.sendMessage("Invalid number of arguments");
+					sender.sendMessage("Use: /dungeon addreward <item-id> [number]");
+				}
 			}
 			else if(args[0].equals("msg"))
 			{
-				if(args.length == 3)
+				if(args.length >= 3)
 				{
 					if(sender instanceof Player)
 					{
@@ -245,13 +269,13 @@ public class Dungeons extends JavaPlugin
 						Dungeon d = getEditedDungeon(p);
 						if(d != null)
 						{
-							if(args[2].equals("start"))
+							if(args[1].equals("start"))
 							{
-								d.setStartMsg(args[3]);
+								d.setStartMsg(args[2]);
 							}
-							else if(args[2].equals("end"))
+							else if(args[1].equals("end"))
 							{
-								d.setEndMsg(args[3]);
+								d.setEndMsg(args[2]);
 							}
 							else sender.sendMessage("Invalid message type. Only start and end allowed.");
 						}
@@ -259,7 +283,11 @@ public class Dungeons extends JavaPlugin
 					}
 					else sender.sendMessage("You can't use this command from command line");
 				}
-				else sender.sendMessage("Invalid number of arguments");
+				else 
+				{
+					sender.sendMessage("Invalid number of arguments");
+					sender.sendMessage("Use: /dungeon msg start/end <message>");
+				}
 			}
 			else if(args[0].equals("save"))
 			{
@@ -276,7 +304,7 @@ public class Dungeons extends JavaPlugin
 				}
 				else sender.sendMessage("You can't use this command from command line");
 			}
-			else sender.sendMessage("Did not recognize option "+args[0]);
+			else sender.sendMessage("Not a valid option: "+args[0]);
 			return true;
 		}
 		else return false;
