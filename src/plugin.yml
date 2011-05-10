@@ -1,0 +1,7 @@
+name: Dungeons
+main: com.bukkit.mot.dungeons.Dungeons
+version: 0.1
+commands:
+  dungeon:
+    alias: [d]
+    description: Allows users to create and play dungeons
