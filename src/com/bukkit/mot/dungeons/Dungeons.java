@@ -269,13 +269,20 @@ public class Dungeons extends JavaPlugin
 						Dungeon d = getEditedDungeon(p);
 						if(d != null)
 						{
+							String msg = "";
+							for(int i = 2; i < args.length; i++)
+							{
+								msg += args[i];
+								if(i != args.length - 1)
+									msg += " ";
+							}
 							if(args[1].equals("start"))
 							{
-								d.setStartMsg(args[2]);
+								d.setStartMsg(msg);
 							}
 							else if(args[1].equals("end"))
 							{
-								d.setEndMsg(args[2]);
+								d.setEndMsg(msg);
 							}
 							else sender.sendMessage("Invalid message type. Only start and end allowed.");
 						}
