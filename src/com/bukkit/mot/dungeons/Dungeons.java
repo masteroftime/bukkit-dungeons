@@ -8,8 +8,12 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import com.nijiko.permissions.PermissionHandler;
+import com.nijikokun.bukkit.Permissions.Permissions;
 
 public class Dungeons extends JavaPlugin
 {
@@ -19,6 +23,8 @@ public class Dungeons extends JavaPlugin
 	private ArrayList<Dungeon> dungeons = new ArrayList<Dungeon>();
 	
 	private DungeonLoader loader;
+	
+	private static PermissionHandler permissions;
 
 	@Override
 	public void onDisable() 
@@ -391,5 +397,37 @@ public class Dungeons extends JavaPlugin
 				&& l.getBlockZ() == k.getBlockZ())
 			return true;
 		else return false;
+	}
+	
+	public void setupPermissions()
+	{
+		Plugin plugin = getServer().getPluginManager().getPlugin("Permissions");
+		if(plugin != null)
+		{
+			permissions = ((Permissions) plugin).getHandler();
+		}
+		else
+		{
+			System.out.println("Permissions plugin not detected.");
+		}
+	}
+	
+	public static boolean checkPermission(Player player, String permission)
+	{
+		if(permissions != null)
+		{
+			return permissions.has(player, permission);
+		}
+		else
+		{
+			boolean requiresOp = true;
+			if(permissions.equals("dungeons.use")) requiresOp = false;
+			
+			if(requiresOp)
+			{
+				return player.isOp();
+			}
+			else return true;
+		}
 	}
 }
