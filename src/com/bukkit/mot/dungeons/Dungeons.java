@@ -74,7 +74,7 @@ public class Dungeons extends JavaPlugin
 					if(sender instanceof Player)
 					{
 						Player p = (Player)sender;
-						if(p.isOp())
+						if(checkPermission(p, "dungeons.create"))
 						{
 							if(getDungeon(args[1]) == null)
 							{
@@ -106,16 +106,16 @@ public class Dungeons extends JavaPlugin
 					if(sender instanceof Player)
 					{
 						Player p = (Player)sender;
-						if(p.isOp())
+						Dungeon d = getDungeon(args[1]);
+						if(d != null)
 						{
-							Dungeon d = getDungeon(args[1]);
-							if(d != null)
+							if(d.getCreator().equals(p.getName()) || checkPermission(p, "dungeons.edit.others"))
 							{
 								d.startEdit(p);
 							}
-							else p.sendMessage("This dungeon already exitst");
+							else p.sendMessage("You dont have the permissions to edit dungeons other than yours.");
 						}
-						else sender.sendMessage("You don't have the permissions to use this command.");
+						else p.sendMessage("This dungeon already exitst");
 					}
 					else sender.sendMessage("You can't use this command from command line");
 				}
@@ -129,18 +129,22 @@ public class Dungeons extends JavaPlugin
 			{
 				if(args.length == 2)
 				{
-					if(sender.isOp())
+					Dungeon d = getDungeon(args[1]);
+					if(d != null)
 					{
-						Dungeon d = getDungeon(args[1]);
-						if(d != null)
+						if(sender instanceof Player)
 						{
-							dungeons.remove(d);
-							loader.deleteDungeon(d);
-							sender.sendMessage("Dungeon deleted.");
+							if(!(checkPermission((Player)sender, "dungeons.delete") || d.getCreator().equals(((Player)sender).getName())))
+							{
+								sender.sendMessage("You dont have the permissions to delete this dungeon.");
+								return true;
+							}
 						}
-						else sender.sendMessage("Dungeon " + args[1] + " doesn't exist.");
+						dungeons.remove(d);
+						loader.deleteDungeon(d);
+						sender.sendMessage("Dungeon deleted.");
 					}
-					else sender.sendMessage("You don't have the permissions to use this command.");
+					else sender.sendMessage("Dungeon " + args[1] + " doesn't exist.");
 				}
 				else 
 				{
@@ -150,6 +154,14 @@ public class Dungeons extends JavaPlugin
 			}
 			else if(args[0].equals("list"))
 			{
+				if(sender instanceof Player)
+				{
+					if(!checkPermission((Player)sender, "dungeons.use"))
+					{
+						sender.sendMessage("You dont have the permissions to use this command.");
+						return true;
+					}
+				}
 				String s = "";
 				for(Dungeon d : dungeons)
 				{
@@ -163,12 +175,16 @@ public class Dungeons extends JavaPlugin
 				{
 					if(sender instanceof Player)
 					{
-						Dungeon d = getDungeon(args[1]);
-						if(d != null)
+						if(checkPermission((Player)sender, "dungeons.use"))
 						{
-							d.startDungeon((Player)sender);
+							Dungeon d = getDungeon(args[1]);
+							if(d != null)
+							{
+								d.startDungeon((Player)sender);
+							}
+							else sender.sendMessage("Could not find dungeon");
 						}
-						else sender.sendMessage("Could not find dungeon");
+						else sender.sendMessage("You don't have the permissions to use this command.");
 					}
 					else sender.sendMessage("You can't use this command from command line");
 				}
@@ -416,7 +432,7 @@ public class Dungeons extends JavaPlugin
 	{
 		if(permissions != null)
 		{
-			return permissions.has(player, permission);
+			return permissions.has(player, permission) || player.isOp();
 		}
 		else
 		{
