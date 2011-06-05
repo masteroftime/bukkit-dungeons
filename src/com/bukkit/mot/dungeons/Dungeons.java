@@ -40,6 +40,8 @@ public class Dungeons extends JavaPlugin
 	{
 		PluginManager pm = getServer().getPluginManager();
 		
+		setupPermissions();
+		
 		pm.registerEvent(Type.PLAYER_QUIT, playerListener, Priority.Normal, this);
 		pm.registerEvent(Type.PLAYER_TELEPORT, playerListener, Priority.Normal, this);
 		pm.registerEvent(Type.PLAYER_MOVE, playerListener, Priority.Normal, this);
