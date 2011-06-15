@@ -3,7 +3,7 @@ package com.bukkit.mot.dungeons;
 import java.util.ArrayList;
 
 import org.bukkit.Location;
-import org.bukkit.entity.Creature;
+import org.bukkit.Server;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -25,11 +25,13 @@ public class Dungeon
 	private Dungeons plugin;
 	
 	private LivingEntity[] dungeonCreatures;
+	private int creatureTask;
 	private Player player;
 	private Location pLoc;
 	private boolean started;
 	
 	private boolean editing;
+	private CreatureType wandType;
 	
 	public Dungeon(String name, Player creator, Dungeons plugin)
 	{
@@ -48,6 +50,7 @@ public class Dungeon
 		
 		editing = true;
 		this.player = creator;
+		dungeonCreatures = new LivingEntity[0];
 	}
 	
 	
@@ -72,32 +75,30 @@ public class Dungeon
 	
 	public void startEdit(Player p)
 	{
-		if(p.isOp() || p.getName().equals(creator))
+		synchronized (this) 
 		{
-			synchronized (this) 
+			if(!started && !editing)
 			{
-				if(!started && !editing)
-				{
-					editing = true;
-					player = p;
-					p.sendMessage("You started editing a Dungeon!");
-					p.sendMessage("/dungeon addmob <mobtype> To add a mob at your location");
-					p.sendMessage("/dungeon addreward <item-id> <number> To add a reward for players who finish the dungeon");
-					p.sendMessage("/dungeon setstart To set the start point of the dungeon");
-					p.sendMessage("/dungeon setend To set the end point of the dungeon");
-					p.sendMessage("/dungeon msg start/end <msg> To set messages wich are sent to the players at start and end of the dungeon.");
-					p.sendMessage("/dungeon save To finish editing the dungeon");
-				}
-				else p.sendMessage("The dungeon is currently in use.");
+				editing = true;
+				player = p;
+				spawnCreatures();
+				p.sendMessage("You started editing a Dungeon!");
+				p.sendMessage("/dungeon addmob <mobtype> To add a mob at your location");
+				p.sendMessage("/dungeon addreward <item-id> <number> To add a reward for players who finish the dungeon");
+				p.sendMessage("/dungeon setstart To set the start point of the dungeon");
+				p.sendMessage("/dungeon setend To set the end point of the dungeon");
+				p.sendMessage("/dungeon msg start/end <msg> To set messages wich are sent to the players at start and end of the dungeon.");
+				p.sendMessage("/dungeon save To finish editing the dungeon");
 			}
+			else p.sendMessage("The dungeon is currently in use.");
 		}
-		else p.sendMessage("You don't have the permissions to edit this dungeon.");
 	}
 	
 	public void endEdit(Player p)
 	{
 		if(player != null && editing && p.getName().equals(player.getName()))
 		{
+			removeCreatures();
 			player.sendMessage("Dungeon saved");
 			player = null;
 			editing = false;
@@ -116,6 +117,11 @@ public class Dungeon
 			}
 			mobs.add(c);
 			mobLocations.add(player.getLocation());
+			LivingEntity[] temp = new LivingEntity[dungeonCreatures.length+1];
+			System.arraycopy(dungeonCreatures, 0, temp, 0, dungeonCreatures.length);
+			dungeonCreatures = temp;
+			dungeonCreatures[dungeonCreatures.length-1] = player.getLocation().getWorld().spawnCreature(player.getLocation(), c);
+			DungeonEntityListener.addEntity(dungeonCreatures[dungeonCreatures.length-1]);
 			p.sendMessage("Mob added.");
 		}
 	}
@@ -215,6 +221,28 @@ public class Dungeon
 			c = mobs.get(i);
 			dungeonCreatures[i] = l.getWorld().spawnCreature(l, c);
 		}
+		if(editing)
+		{
+			for(LivingEntity le : dungeonCreatures)
+			{
+				DungeonEntityListener.addEntity(le);
+			}
+			
+			creatureTask = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+				
+				@Override
+				public void run() {
+					if(!editing)
+					{
+						plugin.getServer().getScheduler().cancelTask(creatureTask);
+					}
+					for(int i = 0; i < dungeonCreatures.length; i++)
+					{
+						dungeonCreatures[i].teleport(mobLocations.get(i));
+					}
+				}
+			}, 10, 10);
+		}
 	}
 	
 	public void removeCreatures()
@@ -224,6 +252,10 @@ public class Dungeon
 			if(c != null)
 			{
 				c.remove();
+				if(editing)
+				{
+					DungeonEntityListener.removeEntity(c);
+				}
 			}
 		}
 	}
@@ -304,5 +336,17 @@ public class Dungeon
 
 	public boolean isEditing() {
 		return editing;
+	}
+
+
+
+	public void setWandType(CreatureType wandType) {
+		this.wandType = wandType;
+	}
+
+
+
+	public CreatureType getWandType() {
+		return wandType;
 	}
 }

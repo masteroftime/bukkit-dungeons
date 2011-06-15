@@ -31,7 +31,6 @@ public class DungeonPlayerListener extends PlayerListener
 			event.setFrom(event.getPlayer().getLocation());
 			event.setCancelled(true);
 		}
-		
 	}
 	/*
 	@Override

@@ -4,7 +4,9 @@ import java.util.ArrayList;
 
 import org.bukkit.Location;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
@@ -15,15 +17,15 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
 
-public class Dungeons extends JavaPlugin
+public class Dungeons extends JavaPlugin implements CommandExecutor
 {
 	private DungeonEntityListener entityListener = new DungeonEntityListener(this);
 	private DungeonPlayerListener playerListener = new DungeonPlayerListener(this);
-	
+
 	private ArrayList<Dungeon> dungeons = new ArrayList<Dungeon>();
-	
+
 	private DungeonLoader loader;
-	
+
 	private static PermissionHandler permissions;
 
 	@Override
@@ -39,20 +41,21 @@ public class Dungeons extends JavaPlugin
 	public void onEnable() 
 	{
 		PluginManager pm = getServer().getPluginManager();
-		
+
 		setupPermissions();
-		
+
 		pm.registerEvent(Type.PLAYER_QUIT, playerListener, Priority.Normal, this);
 		pm.registerEvent(Type.PLAYER_TELEPORT, playerListener, Priority.Normal, this);
 		pm.registerEvent(Type.PLAYER_MOVE, playerListener, Priority.Normal, this);
 		pm.registerEvent(Type.ENTITY_DEATH, entityListener, Priority.Normal, this);
+		pm.registerEvent(Type.ENTITY_TARGET, entityListener, Priority.Normal, this);
 		loader = new DungeonLoader(this);
-		
+
 		dungeons = loader.loadDungeons();
-		
+
 		System.out.println("Dungeons Pugin loaded");
 	}
-	
+
 	//public boolean command(Player sender, String label, String[] args)
 	@Override
 	public boolean onCommand(CommandSender sender, Command command,
@@ -338,9 +341,39 @@ public class Dungeons extends JavaPlugin
 			else sender.sendMessage("Not a valid option: "+args[0]);
 			return true;
 		}
+		else if(label.equals("dtool"))
+		{
+			if(sender instanceof Player)
+			{
+				if(args.length == 0 || args[1].equals("help") || args[1].equals("?"))
+				{
+					sender.sendMessage("dtool sets the function of the dungeon edit tool");
+					sender.sendMessage("Usage:");
+					sender.sendMessage("/dtool mob <mobtype> - Set the type of the mob wich is added.");
+				}
+				if(args[0].equals("mob"))
+				{
+					Dungeon d = getDungeon((Player)sender);
+					if(d != null)
+					{
+						if(args.length == 2)
+						{
+							CreatureType ct = CreatureType.fromName(args[1]);
+							d.setWandType(ct);
+						}
+						else
+						{
+							sender.sendMessage("The current mob type is "+d.getWandType().getName());
+						}
+					} else sender.sendMessage("You have to be in editmode to use this command");
+				}
+			} else sender.sendMessage("You can't use this command from command line");
+			
+			return true;
+		}
 		else return false;
 	}
-	
+
 	public void checkLeave(Player p)
 	{
 		Dungeon d = getDungeon(p);
@@ -349,7 +382,7 @@ public class Dungeons extends JavaPlugin
 			d.leaveDungeon();
 		}
 	}
-	
+
 	public boolean checkFinish(Player p)
 	{
 		Dungeon d = getDungeon(p);
@@ -363,11 +396,11 @@ public class Dungeons extends JavaPlugin
 		}
 		return false;
 	}
-	
+
 	public Dungeon getDungeon(String name)
 	{
 		if(dungeons.size() == 0) return null;
-		
+
 		Dungeon d = null;
 		for(Dungeon x : dungeons)
 		{
@@ -379,35 +412,35 @@ public class Dungeons extends JavaPlugin
 		}
 		return d;
 	}
-	
+
 	public Dungeon getDungeon(Player p)
 	{
 		if(dungeons.size() == 0) return null;
-		
+
 		String name = p.getName();
-		
+
 		for(Dungeon d : dungeons)
 		{
 			if(d.getPlayer() != null && !d.isEditing() && d.getPlayer().getName().equals(name)) return d;
 		}
-		
+
 		return null;
 	}
-	
+
 	public Dungeon getEditedDungeon(Player p)
 	{
 		if(dungeons.size() == 0) return null;
-		
+
 		String name = p.getName();
-		
+
 		for(Dungeon d : dungeons)
 		{
 			if(d.getPlayer() != null && d.isEditing() && d.getPlayer().getName().equals(name)) return d;
 		}
-		
+
 		return null;
 	}
-	
+
 	public boolean compareLocations(Location l, Location k)
 	{
 		if(l.getBlockX() == k.getBlockX()
@@ -416,7 +449,7 @@ public class Dungeons extends JavaPlugin
 			return true;
 		else return false;
 	}
-	
+
 	public void setupPermissions()
 	{
 		Plugin plugin = getServer().getPluginManager().getPlugin("Permissions");
@@ -429,7 +462,7 @@ public class Dungeons extends JavaPlugin
 			System.out.println("Permissions plugin not detected.");
 		}
 	}
-	
+
 	public static boolean checkPermission(Player player, String permission)
 	{
 		if(permissions != null)
@@ -440,7 +473,7 @@ public class Dungeons extends JavaPlugin
 		{
 			boolean requiresOp = true;
 			if(permissions.equals("dungeons.use")) requiresOp = false;
-			
+
 			if(requiresOp)
 			{
 				return player.isOp();
